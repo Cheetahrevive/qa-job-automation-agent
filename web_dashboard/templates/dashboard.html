@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - QA Job Agent{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-3">
+        <div class="card bg-primary text-white">
+            <div class="card-body text-center">
+                <h5>Total Applications</h5>
+                <h2>{{ stats.total_applications }}</h2>
+                <small>Last 30 days</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-success text-white">
+            <div class="card-body text-center">
+                <h5>Interviews</h5>
+                <h2>{{ stats.interviews }}</h2>
+                <small>Rate: {{ "%.1f"|format(stats.interview_rate * 100) if stats.interview_rate else 0 }}%</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-warning text-white">
+            <div class="card-body text-center">
+                <h5>Offers</h5>
+                <h2>{{ stats.offers }}</h2>
+                <small>Success Rate: {{ "%.1f"|format(stats.offer_rate * 100) if stats.offer_rate else 0 }}%</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card bg-info text-white">
+            <div class="card-body text-center">
+                <h5>Response Rate</h5>
+                <h2>{{ "%.1f"|format(stats.response_rate * 100) if stats.response_rate else 0 }}%</h2>
+                <small>Overall</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Agent Control -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-robot"></i> Agent Control</h5>
+            </div>
+            <div class="card-body">
+                <button class="btn btn-success" onclick="startAgent()">
+                    <i class="fas fa-play"></i> Start Agent
+                </button>
+                <button class="btn btn-warning" onclick="pauseAgent()">
+                    <i class="fas fa-pause"></i> Pause
+                </button>
+                <button class="btn btn-danger" onclick="stopAgent()">
+                    <i class="fas fa-stop"></i> Stop
+                </button>
+                <span class="ml-3">
+                    Status: <span class="badge badge-success" id="agentStatus">Idle</span>
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Applications -->
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h5><i class="fas fa-history"></i> Recent Applications</h5>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Job Title</th>
+                                <th>Company</th>
+                                <th>Match Score</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for app in recent_apps %}
+                            <tr>
+                                <td>{{ app.application_date[:10] if app.application_date else 'N/A' }}</td>
+                                <td>{{ app.job_title or 'N/A' }}</td>
+                                <td>{{ app.company or 'N/A' }}</td>
+                                <td>
+                                    <div class="progress" style="height: 20px;">
+                                        <div class="progress-bar" 
+                                             style="width: {{ (app.match_score * 100) if app.match_score else 0 }}%">
+                                            {{ "%.0f"|format((app.match_score * 100) if app.match_score else 0) }}%
+                                        </div>
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="badge badge-{{ 'success' if app.status == 'applied' else 'info' }}">
+                                        {{ app.status or 'unknown' }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% else %}
+                            <tr>
+                                <td colspan="5" class="text-center">No applications yet. Start the agent to begin!</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function startAgent() {
+    fetch('/api/agent/start', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            alert(d.message);
+            location.reload();
+        });
+}
+
+function pauseAgent() {
+    alert('Agent paused');
+}
+
+function stopAgent() {
+    fetch('/api/agent/stop', { method: 'POST' })
+        .then(r => r.json())
+        .then(d => {
+            alert(d.message);
+            location.reload();
+        });
+}
+
+// Auto-refresh every 30 seconds
+setInterval(() => location.reload(), 30000);
+</script>
+{% endblock %}
