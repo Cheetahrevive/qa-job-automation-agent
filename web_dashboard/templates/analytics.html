@@ -3,9 +3,10 @@
 
 {% block extra_css %}
 <style>
-  .progress { height: 22px; margin-top: 4px; }
-  .skill-bar { background: #e9ecef; border-radius: 4px; overflow: hidden; }
-  .skill-fill { height: 22px; background: linear-gradient(90deg, #0d6efd, #6ea8fe); border-radius: 4px; }
+  .skill-bar { background: #e9ecef; border-radius: 4px; overflow: hidden; height: 18px; }
+  .skill-fill { height: 18px; background: linear-gradient(90deg, #0d6efd, #6ea8fe); border-radius: 4px; }
+  .chart-container { position: relative; height: 260px; }
+  .no-data-overlay { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; color: #adb5bd; }
 </style>
 {% endblock %}
 
@@ -58,31 +59,39 @@
 </div>
 
 <!-- Charts Row -->
-<div class="row mb-4">
+<div class="row mb-4 g-3">
   <div class="col-lg-8">
-    <div class="card h-100">
+    <div class="card">
       <div class="card-header">
-        <h6 class="mb-0"><i class="fas fa-line-chart"></i> Applications Over Time (Last 30 Days)</h6>
+        <h6 class="mb-0"><i class="fas fa-chart-line"></i> Applications Over Time (Last 30 Days)</h6>
       </div>
       <div class="card-body">
-        <canvas id="timelineChart" height="120"></canvas>
+        <div class="chart-container">
+          <canvas id="timelineChart"></canvas>
+        </div>
       </div>
     </div>
   </div>
   <div class="col-lg-4">
-    <div class="card h-100">
+    <div class="card">
       <div class="card-header">
-        <h6 class="mb-0"><i class="fas fa-pie-chart"></i> Status Breakdown</h6>
+        <h6 class="mb-0"><i class="fas fa-chart-pie"></i> Status Breakdown</h6>
       </div>
-      <div class="card-body d-flex align-items-center justify-content-center">
-        <canvas id="statusChart" height="200"></canvas>
+      <div class="card-body">
+        <div class="chart-container" style="height:260px;">
+          <canvas id="statusChart"></canvas>
+          <div class="no-data-overlay" id="noDataMsg" style="display:none;">
+            <i class="fas fa-inbox fa-2x mb-2 d-block"></i>
+            No applications yet
+          </div>
+        </div>
       </div>
     </div>
   </div>
 </div>
 
 <!-- Skills + Target Roles -->
-<div class="row mb-4">
+<div class="row mb-4 g-3">
   <div class="col-lg-8">
     <div class="card">
       <div class="card-header">
@@ -102,8 +111,8 @@
           ('AI Testing / GitHub Copilot', 70, 'Advanced')
         ] %}
         {% for skill, pct, level in skill_list %}
-        <div class="mb-2">
-          <div class="d-flex justify-content-between">
+        <div class="mb-3">
+          <div class="d-flex justify-content-between mb-1">
             <small class="fw-semibold">{{ skill }}</small>
             <small class="text-muted">{{ level }}</small>
           </div>
@@ -147,30 +156,29 @@
 document.addEventListener('DOMContentLoaded', function() {
   fetch('/api/stats')
     .then(r => r.json())
-    .then(data => {
+    .then(function(data) {
       document.getElementById('totalApps').textContent = data.total_applications || 0;
       document.getElementById('totalInterviews').textContent = data.interviews || 0;
       document.getElementById('totalOffers').textContent = data.offers || 0;
       var rr = data.response_rate ? (data.response_rate * 100).toFixed(1) + '%' : '0%';
       document.getElementById('responseRate').textContent = rr;
 
+      var applied = (data.total_applications||0) - (data.interviews||0) - (data.offers||0) - (data.rejections||0);
+      var hasData = (data.total_applications || 0) > 0;
       var sCtx = document.getElementById('statusChart').getContext('2d');
-      new Chart(sCtx, {
-        type: 'doughnut',
-        data: {
-          labels: ['Applied', 'Interview', 'Offer', 'Rejected'],
-          datasets: [{
-            data: [
-              (data.total_applications||0) - (data.interviews||0) - (data.offers||0) - (data.rejections||0),
-              data.interviews || 0,
-              data.offers || 0,
-              data.rejections || 0
-            ],
-            backgroundColor: ['#0d6efd','#ffc107','#198754','#dc3545']
-          }]
-        },
-        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
-      });
+      if (hasData) {
+        new Chart(sCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Applied', 'Interview', 'Offer', 'Rejected'],
+            datasets: [{ data: [applied, data.interviews||0, data.offers||0, data.rejections||0],
+              backgroundColor: ['#0d6efd','#ffc107','#198754','#dc3545'] }]
+          },
+          options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+        });
+      } else {
+        document.getElementById('noDataMsg').style.display = 'block';
+      }
     })
     .catch(function(e) { console.error('Stats fetch failed', e); });
 
@@ -186,16 +194,10 @@ document.addEventListener('DOMContentLoaded', function() {
     type: 'line',
     data: {
       labels: labels,
-      datasets: [{
-        label: 'Applications',
-        data: Array(30).fill(0),
-        borderColor: '#0d6efd',
-        backgroundColor: 'rgba(13,110,253,0.1)',
-        tension: 0.4,
-        fill: true
-      }]
+      datasets: [{ label: 'Applications', data: Array(30).fill(0),
+        borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.1)', tension: 0.4, fill: true }]
     },
-    options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
   });
 });
 </script>
