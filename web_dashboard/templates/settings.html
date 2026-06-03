@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+{% block title %}Settings - QA Job Agent{% endblock %}
+{% block content %}
+<div class="container-fluid px-4">
+  <h1 class="mt-4">Settings</h1>
+  <ol class="breadcrumb mb-4">
+    <li class="breadcrumb-item"><a href="/">Dashboard</a></li>
+    <li class="breadcrumb-item active">Settings</li>
+  </ol>
+
+  <div class="row">
+    <!-- Profile Card -->
+    <div class="col-xl-4 col-md-6 mb-4">
+      <div class="card shadow h-100">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Candidate Profile</h6>
+        </div>
+        <div class="card-body">
+          <div class="text-center mb-3">
+            <div class="rounded-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" style="width:80px;height:80px;font-size:2rem;">RK</div>
+            <h5 class="mt-2 mb-0">Ravi Kalagara</h5>
+            <small class="text-muted">QA Engineer / SDET</small>
+          </div>
+          <hr>
+          <ul class="list-unstyled small">
+            <li><strong>Location:</strong> Irving, TX</li>
+            <li><strong>Experience:</strong> 13+ Years</li>
+            <li><strong>Email:</strong> ravi.kalagara@email.com</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Job Preferences -->
+    <div class="col-xl-8 col-md-6 mb-4">
+      <div class="card shadow h-100">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Job Preferences</h6>
+        </div>
+        <div class="card-body">
+          <form id="preferencesForm">
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Target Role</label>
+                <input type="text" class="form-control" id="targetRole" value="QA Engineer / SDET">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Location Preference</label>
+                <input type="text" class="form-control" id="location" value="Irving, TX / Remote">
+              </div>
+            </div>
+            <div class="row mb-3">
+              <div class="col-md-6">
+                <label class="form-label">Min Salary ($)</label>
+                <input type="number" class="form-control" id="minSalary" value="120000">
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Job Type</label>
+                <select class="form-select" id="jobType">
+                  <option value="full-time" selected>Full-Time</option>
+                  <option value="contract">Contract</option>
+                  <option value="both">Both</option>
+                </select>
+              </div>
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Key Skills (comma separated)</label>
+              <input type="text" class="form-control" id="skills" value="Selenium, Playwright, Python, Java, TestNG, Pytest, API Testing, CI/CD, JIRA">
+            </div>
+            <div class="mb-3">
+              <label class="form-label">Target Companies</label>
+              <input type="text" class="form-control" id="companies" value="Amazon, Microsoft, Google, Salesforce, Meta">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="savePreferences()">Save Preferences</button>
+            <span id="saveMsg" class="ms-3 text-success" style="display:none;">Saved!</span>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Automation Settings -->
+  <div class="row">
+    <div class="col-12 mb-4">
+      <div class="card shadow">
+        <div class="card-header py-3">
+          <h6 class="m-0 font-weight-bold text-primary">Automation Settings</h6>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Job Boards</label>
+              <div class="form-check"><input class="form-check-input" type="checkbox" id="linkedin" checked><label class="form-check-label" for="linkedin">LinkedIn</label></div>
+              <div class="form-check"><input class="form-check-input" type="checkbox" id="indeed" checked><label class="form-check-label" for="indeed">Indeed</label></div>
+              <div class="form-check"><input class="form-check-input" type="checkbox" id="glassdoor"><label class="form-check-label" for="glassdoor">Glassdoor</label></div>
+              <div class="form-check"><input class="form-check-input" type="checkbox" id="dice" checked><label class="form-check-label" for="dice">Dice</label></div>
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Application Frequency</label>
+              <select class="form-select" id="frequency">
+                <option value="daily" selected>Daily</option>
+                <option value="weekly">Weekly</option>
+                <option value="manual">Manual Only</option>
+              </select>
+              <label class="form-label mt-2">Max Apps/Day</label>
+              <input type="number" class="form-control" id="maxApps" value="10">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Min Match Score (%)</label>
+              <input type="number" class="form-control" id="minScore" value="70">
+              <label class="form-label mt-2">Auto-Apply Threshold (%)</label>
+              <input type="number" class="form-control" id="autoThreshold" value="85">
+            </div>
+            <div class="col-md-3 mb-3">
+              <label class="form-label">Notifications</label>
+              <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="emailNotif" checked><label class="form-check-label" for="emailNotif">Email Alerts</label></div>
+              <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="newJobNotif" checked><label class="form-check-label" for="newJobNotif">New Job Matches</label></div>
+              <div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="statusNotif"><label class="form-check-label" for="statusNotif">Status Changes</label></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Resume Info -->
+  <div class="row">
+    <div class="col-12 mb-4">
+      <div class="card shadow">
+        <div class="card-header py-3 d-flex justify-content-between align-items-center">
+          <h6 class="m-0 font-weight-bold text-primary">Resume & Skills Profile</h6>
+          <span class="badge bg-success">Active Resume: ravi_kalagara_resume.json</span>
+        </div>
+        <div class="card-body">
+          <div class="row">
+            <div class="col-md-6">
+              <h6>Core Skills</h6>
+              <div id="skillBadges">
+                {% set skills = ['Selenium','Playwright','Python','Java','TestNG','Pytest','REST API','CI/CD','JIRA','BDD','Cucumber','Jenkins','Git','Docker','SQL','Accessibility Testing','WCAG'] %}
+                {% for skill in skills %}
+                <span class="badge bg-primary me-1 mb-1">{{ skill }}</span>
+                {% endfor %}
+              </div>
+            </div>
+            <div class="col-md-6">
+              <h6>Experience Summary</h6>
+              <ul class="list-unstyled small">
+                <li>&#10003; 13+ years QA/SDET experience</li>
+                <li>&#10003; Automation frameworks: Selenium, Playwright, TestNG, Pytest</li>
+                <li>&#10003; API testing: REST, GraphQL, Postman</li>
+                <li>&#10003; Accessibility: WCAG 2.1/2.2, axe-core</li>
+                <li>&#10003; CI/CD: Jenkins, GitHub Actions, CircleCI</li>
+                <li>&#10003; Cloud: AWS, Azure DevOps</li>
+                <li>&#10003; Agile/Scrum, Team Lead experience</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function savePreferences() {
+  var prefs = {
+    targetRole: document.getElementById('targetRole').value,
+    location: document.getElementById('location').value,
+    minSalary: document.getElementById('minSalary').value,
+    jobType: document.getElementById('jobType').value,
+    skills: document.getElementById('skills').value,
+    companies: document.getElementById('companies').value
+  };
+  localStorage.setItem('jobPreferences', JSON.stringify(prefs));
+  var msg = document.getElementById('saveMsg');
+  msg.style.display = 'inline';
+  setTimeout(function(){ msg.style.display = 'none'; }, 2000);
+}
+window.onload = function() {
+  var saved = localStorage.getItem('jobPreferences');
+  if (saved) {
+    var p = JSON.parse(saved);
+    if (p.targetRole) document.getElementById('targetRole').value = p.targetRole;
+    if (p.location) document.getElementById('location').value = p.location;
+    if (p.minSalary) document.getElementById('minSalary').value = p.minSalary;
+    if (p.jobType) document.getElementById('jobType').value = p.jobType;
+    if (p.skills) document.getElementById('skills').value = p.skills;
+    if (p.companies) document.getElementById('companies').value = p.companies;
+  }
+};
+</script>
+{% endblock %}
