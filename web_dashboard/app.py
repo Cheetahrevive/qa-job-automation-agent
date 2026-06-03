@@ -214,6 +214,34 @@ def agent_status():
         'last_activity': datetime.now().isoformat()
     })
 
+@app.route('/api/applications/add', methods=['POST'])
+@login_required
+def add_application():
+    """Add a single job application to the database"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({'error': 'No data provided'}), 400
+        tracker.conn.execute('''
+            INSERT INTO applications (job_id, job_title, company, platform, application_url, match_score, application_date, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (
+            data.get('job_id', str(datetime.now().timestamp())),
+            data.get('job_title', 'Unknown'),
+            data.get('company', 'Unknown'),
+            data.get('platform', 'Unknown'),
+            data.get('application_url', ''),
+            data.get('match_score', 0.0),
+            data.get('application_date', datetime.now().isoformat()),
+            data.get('status', 'applied'),
+            data.get('notes', '')
+        ))
+        tracker.conn.commit()
+        return jsonify({'success': True, 'message': 'Application recorded'})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
 # Error handlers
 @app.errorhandler(404)
 def not_found(e):
