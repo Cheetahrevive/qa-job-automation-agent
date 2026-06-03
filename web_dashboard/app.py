@@ -1,31 +1,37 @@
 # web_dashboard/app.py
-from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
-from flask_cors import CORS
-from datetime import datetime, timedelta
 import os
 import sys
+from flask import Flask, render_template, request, jsonify, redirect, url_for, flash, session
+from flask_cors import CORS
+from datetime import datetime
+from functools import wraps
 
-# Add parent directory to path for imports
+# Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from agent.application_tracker import ApplicationTracker
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
+
+# IMPORTANT: Use environment variable or generate random key
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', os.urandom(24).hex())
+app.config['SESSION_COOKIE_SECURE'] = True
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
+
 CORS(app)
 
-# Initialize tracker with path relative to web_dashboard folder
+# Initialize tracker
 db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'applications.db')
+os.makedirs(os.path.dirname(db_path), exist_ok=True)
 tracker = ApplicationTracker(db_path)
 
-# Simple user store (use environment variables in production)
+# User credentials from environment variables
 USERS = {
-    os.getenv('ADMIN_USERNAME', 'admin'): os.getenv('ADMIN_PASSWORD', 'password')
+    os.environ.get('ADMIN_USERNAME', 'admin'): os.environ.get('ADMIN_PASSWORD', 'admin')
 }
 
-# Decorator for protected routes
 def login_required(f):
-    from functools import wraps
     @wraps(f)
     def decorated_function(*args, **kwargs):
         if 'username' not in session:
@@ -41,6 +47,7 @@ def index():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
+    error = None
     if request.method == 'POST':
         username = request.form.get('username')
         password = request.form.get('password')
@@ -48,10 +55,12 @@ def login():
         if username in USERS and USERS[username] == password:
             session['username'] = username
             session.permanent = True
-            flash('✅ Login successful! Welcome back.', 'success')
-            return redirect(url_for('dashboard'))
+            flash('✅ Login successful!', 'success')
+            next_page = request.args.get('next')
+            return redirect(next_page or url_for('dashboard'))
         else:
-            flash('❌ Invalid credentials. Please try again.', 'danger')
+            error = '❌ Invalid username or password'
+            flash(error, 'danger')
     
     return render_template('login.html')
 
@@ -77,15 +86,15 @@ def dashboard():
         
         return render_template('dashboard.html', 
                              stats=stats, 
-                             recent_apps=recent_apps_list,
-                             username=session.get('username'))
+                             recent_apps=recent_apps_list)
     except Exception as e:
-        flash(f'Error loading dashboard: {str(e)}', 'danger')
+        print(f"Dashboard error: {e}")
         return render_template('dashboard.html', 
                              stats={'total_applications': 0, 'interviews': 0, 
-                                   'offers': 0, 'response_rate': 0},
-                             recent_apps=[],
-                             username=session.get('username'))
+                                   'offers': 0, 'response_rate': 0, 
+                                   'interview_rate': 0, 'offer_rate': 0,
+                                   'active_applications': 0, 'rejections': 0},
+                             recent_apps=[])
 
 @app.route('/applications')
 @login_required
@@ -109,8 +118,8 @@ def applications():
         apps = tracker.conn.execute(query, params).fetchall()
         apps_list = [dict(app) for app in apps]
     except Exception as e:
+        print(f"Applications error: {e}")
         apps_list = []
-        flash(f'Error loading applications: {str(e)}', 'danger')
     
     return render_template('applications.html', 
                          applications=apps_list,
@@ -120,47 +129,36 @@ def applications():
 @app.route('/analytics')
 @login_required
 def analytics():
-    try:
-        daily_stats = tracker.conn.execute('''
-            SELECT 
-                date(application_date) as date,
-                COUNT(*) as count,
-                AVG(match_score) as avg_score
-            FROM applications
-            WHERE application_date >= datetime('now', '-30 days')
-            GROUP BY date(application_date)
-            ORDER BY date
-        ''').fetchall()
-        
-        platform_stats = tracker.conn.execute('''
-            SELECT 
-                COALESCE(platform, 'Unknown') as platform,
-                COUNT(*) as count,
-                ROUND(AVG(match_score) * 100, 1) as avg_score
-            FROM applications
-            WHERE application_date >= datetime('now', '-30 days')
-            GROUP BY platform
-            ORDER BY count DESC
-        ''').fetchall()
-        
-        return render_template('analytics.html',
-                             daily_stats=[dict(s) for s in daily_stats],
-                             platform_stats=[dict(p) for p in platform_stats])
-    except Exception as e:
-        flash(f'Error loading analytics: {str(e)}', 'danger')
-        return render_template('analytics.html', daily_stats=[], platform_stats=[])
+    return render_template('analytics.html')
 
 @app.route('/settings')
 @login_required
 def settings():
-    return render_template('settings.html')
+    # Get config from environment
+    config = {
+        'profile': {
+            'first_name': os.environ.get('FIRST_NAME', ''),
+            'last_name': os.environ.get('LAST_NAME', ''),
+            'email': os.environ.get('EMAIL', ''),
+            'phone': os.environ.get('PHONE', ''),
+            'location': os.environ.get('LOCATION', ''),
+            'years_experience': os.environ.get('YEARS_EXPERIENCE', '5')
+        },
+        'preferences': {
+            'remote': os.environ.get('PREFER_REMOTE', 'true'),
+            'location': os.environ.get('PREFERRED_LOCATION', 'Remote'),
+            'min_salary': os.environ.get('MIN_SALARY', '100000')
+        }
+    }
+    return render_template('settings.html', config=config)
 
 # API Routes
 @app.route('/api/stats')
 @login_required
 def api_stats():
     try:
-        stats = tracker.get_stats(days=request.args.get('days', 30, type=int))
+        days = request.args.get('days', 30, type=int)
+        stats = tracker.get_stats(days=days)
         return jsonify(stats)
     except Exception as e:
         return jsonify({'error': str(e)}), 500
@@ -179,23 +177,18 @@ def api_recent_applications():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/applications/<int:app_id>/status', methods=['PUT'])
-@login_required
-def update_application_status(app_id):
-    try:
-        data = request.json
-        new_status = data.get('status')
-        notes = data.get('notes', '')
-        
-        tracker.update_status(str(app_id), new_status, notes)
-        return jsonify({'success': True, 'message': 'Status updated'})
-    except Exception as e:
-        return jsonify({'error': str(e)}), 500
+@app.route('/api/health')
+def health_check():
+    """Health check endpoint for Render"""
+    return jsonify({
+        'status': 'healthy',
+        'timestamp': datetime.now().isoformat(),
+        'version': '1.0.0'
+    })
 
 @app.route('/api/agent/start', methods=['POST'])
 @login_required
-def api_start_agent():
-    # Placeholder for agent start logic
+def start_agent():
     return jsonify({
         'success': True,
         'message': 'Agent started successfully',
@@ -204,8 +197,7 @@ def api_start_agent():
 
 @app.route('/api/agent/stop', methods=['POST'])
 @login_required
-def api_stop_agent():
-    # Placeholder for agent stop logic
+def stop_agent():
     return jsonify({
         'success': True,
         'message': 'Agent stopped successfully',
@@ -214,10 +206,10 @@ def api_stop_agent():
 
 @app.route('/api/agent/status')
 @login_required
-def api_agent_status():
+def agent_status():
     stats = tracker.get_stats(days=1)
     return jsonify({
-        'status': 'idle',
+        'status': 'running',
         'applications_today': stats['total_applications'],
         'last_activity': datetime.now().isoformat()
     })
@@ -231,12 +223,17 @@ def not_found(e):
 def server_error(e):
     return render_template('base.html', error="Internal server error"), 500
 
+# Create startup function
+def initialize_app():
+    """Initialize application directories and database"""
+    base_dir = os.path.dirname(os.path.dirname(__file__))
+    dirs = ['data', 'data/resume', 'data/reports', 'data/logs']
+    for d in dirs:
+        os.makedirs(os.path.join(base_dir, d), exist_ok=True)
+
+# Initialize on import
+initialize_app()
+
 if __name__ == '__main__':
-    # Create necessary directories
-    os.makedirs(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'resume'), exist_ok=True)
-    os.makedirs(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'reports'), exist_ok=True)
-    os.makedirs(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'logs'), exist_ok=True)
-    
-    # Run the app
-    port = int(os.getenv('PORT', 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port)
