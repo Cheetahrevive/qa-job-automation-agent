@@ -1,0 +1,13 @@
+agent/__init__.py
+web_dashboard/__init__.py
+web_dashboard/static/css/.gitkeep
+web_dashboard/static/js/.gitkeep
+web_dashboard/static/images/.gitkeep
+web_dashboard/templates/.gitkeep
+web_dashboard/api/__init__.py
+email_templates/.gitkeep
+data/resume/.gitkeep
+data/reports/.gitkeep
+data/logs/.gitkeep
+tests/__init__.py
+scripts/.gitkeep
