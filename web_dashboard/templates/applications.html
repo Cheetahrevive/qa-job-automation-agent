@@ -11,9 +11,9 @@
 <!-- Filters -->
 <div class="card mb-4">
   <div class="card-body">
-    <form method="get" action="/applications" class="row g-3">
+    <form method="get" action="/applications" class="row g-3 align-items-end">
       <div class="col-md-4">
-        <label class="form-label">Status Filter</label>
+        <label class="form-label fw-semibold">Status Filter</label>
         <select name="status" class="form-select" onchange="this.form.submit()">
           <option value="all" {% if current_filter == 'all' %}selected{% endif %}>All Status</option>
           <option value="applied" {% if current_filter == 'applied' %}selected{% endif %}>Applied</option>
@@ -24,7 +24,7 @@
         </select>
       </div>
       <div class="col-md-4">
-        <label class="form-label">Date Range</label>
+        <label class="form-label fw-semibold">Date Range</label>
         <select name="range" class="form-select" onchange="this.form.submit()">
           <option value="7" {% if date_range == '7' %}selected{% endif %}>Last 7 days</option>
           <option value="30" {% if date_range == '30' %}selected{% endif %}>Last 30 days</option>
@@ -42,13 +42,13 @@
 <!-- Applications Table -->
 <div class="card">
   <div class="card-header">
-    <h5><i class="fas fa-table"></i> Application List</h5>
+    <h5 class="mb-0"><i class="fas fa-table"></i> Application List</h5>
   </div>
   <div class="card-body p-0">
     {% if applications %}
     <div class="table-responsive">
       <table class="table table-hover mb-0">
-        <thead class="table-dark">
+        <thead class="table-light">
           <tr>
             <th>Company</th>
             <th>Job Title</th>
@@ -62,37 +62,44 @@
         <tbody>
           {% for app in applications %}
           <tr>
-            <td><strong>{{ app.company }}</strong></td>
-            <td>{{ app.job_title }}</td>
-            <td><span class="badge bg-secondary">{{ app.platform }}</span></td>
+            <td><strong>{{ app.company or 'N/A' }}</strong></td>
+            <td>{{ app.job_title or 'N/A' }}</td>
+            <td>{{ app.platform or 'N/A' }}</td>
             <td>
               {% if app.status == 'applied' %}
                 <span class="badge bg-primary">Applied</span>
               {% elif app.status == 'interview' %}
-                <span class="badge bg-warning text-dark">Interview</span>
+                <span class="badge bg-success">Interview</span>
               {% elif app.status == 'offer' %}
-                <span class="badge bg-success">Offer</span>
+                <span class="badge bg-warning text-dark">Offer</span>
               {% elif app.status == 'rejected' %}
                 <span class="badge bg-danger">Rejected</span>
+              {% elif app.status == 'withdrawn' %}
+                <span class="badge bg-secondary">Withdrawn</span>
               {% else %}
-                <span class="badge bg-secondary">{{ app.status }}</span>
+                <span class="badge bg-secondary">{{ app.status or 'Unknown' }}</span>
               {% endif %}
             </td>
             <td>
               {% if app.match_score %}
-                <div class="progress" style="height:20px;min-width:80px;">
-                  <div class="progress-bar {% if app.match_score >= 0.8 %}bg-success{% elif app.match_score >= 0.6 %}bg-warning{% else %}bg-danger{% endif %}"
-                    role="progressbar"
-                    style="width: {{ (app.match_score * 100)|int }}%">
-                    {{ (app.match_score * 100)|int }}%
-                  </div>
+              <div class="progress" style="height: 20px; min-width: 80px;">
+                <div class="progress-bar"
+                  style="width: {{ (app.match_score * 100) | int }}%">
+                  {{ (app.match_score * 100) | int }}%
                 </div>
+              </div>
               {% else %}
-                <span class="text-muted">N/A</span>
+              <span class="badge bg-secondary">N/A</span>
               {% endif %}
             </td>
             <td>{{ app.application_date[:10] if app.application_date else 'N/A' }}</td>
-            <td><small class="text-muted">{{ app.notes[:50] + '...' if app.notes and app.notes|length > 50 else app.notes or '' }}</small></td>
+            <td>
+              {% if app.notes and app.notes|length > 50 %}
+                {{ app.notes[:50] }}...
+              {% else %}
+                {{ app.notes or '' }}
+              {% endif %}
+            </td>
           </tr>
           {% endfor %}
         </tbody>
@@ -100,10 +107,12 @@
     </div>
     {% else %}
     <div class="text-center py-5">
-      <i class="fas fa-inbox fa-4x text-muted mb-3"></i>
+      <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
       <h4 class="text-muted">No applications found</h4>
       <p class="text-muted">Start the agent to begin applying to jobs matching your QA profile.</p>
-      <a href="/dashboard" class="btn btn-primary mt-2"><i class="fas fa-robot"></i> Go to Dashboard</a>
+      <a href="/dashboard" class="btn btn-primary">
+        <i class="fas fa-robot"></i> Go to Dashboard
+      </a>
     </div>
     {% endif %}
   </div>
