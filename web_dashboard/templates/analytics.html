@@ -1,0 +1,159 @@
+{% extends "base.html" %}
+{% block title %}Analytics - QA Job Agent{% endblock %}
+{% block content %}
+<div class="row mb-4">
+  <div class="col-12">
+    <h2><i class="fas fa-chart-bar"></i> Analytics</h2>
+    <p class="text-muted">Visual insights into your job search performance</p>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+  <div class="col-md-3">
+    <div class="card bg-primary text-white text-center">
+      <div class="card-body">
+        <h5>Total Applications</h5>
+        <h2 id="totalApps">-</h2>
+        <small>All time</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-warning text-dark text-center">
+      <div class="card-body">
+        <h5>Interviews</h5>
+        <h2 id="totalInterviews">-</h2>
+        <small>Secured</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-success text-white text-center">
+      <div class="card-body">
+        <h5>Offers</h5>
+        <h2 id="totalOffers">-</h2>
+        <small>Received</small>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-3">
+    <div class="card bg-info text-white text-center">
+      <div class="card-body">
+        <h5>Response Rate</h5>
+        <h2 id="responseRate">-</h2>
+        <small>Overall</small>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Row -->
+<div class="row mb-4">
+  <div class="col-md-8">
+    <div class="card">
+      <div class="card-header"><h5><i class="fas fa-chart-line"></i> Applications Over Time (Last 30 Days)</h5></div>
+      <div class="card-body"><canvas id="timelineChart" height="100"></canvas></div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card">
+      <div class="card-header"><h5><i class="fas fa-chart-pie"></i> Status Breakdown</h5></div>
+      <div class="card-body"><canvas id="statusChart"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- Skills & Platform -->
+<div class="row mb-4">
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h5><i class="fas fa-code"></i> Your Top Skills</h5></div>
+      <div class="card-body">
+        <div class="mb-2"><span class="fw-bold">Selenium / WebDriver</span><div class="progress"><div class="progress-bar bg-success" style="width:98%">Expert - 13 yrs</div></div></div>
+        <div class="mb-2"><span class="fw-bold">Playwright</span><div class="progress"><div class="progress-bar bg-success" style="width:95%">Expert</div></div></div>
+        <div class="mb-2"><span class="fw-bold">Java</span><div class="progress"><div class="progress-bar bg-success" style="width:95%">Expert</div></div></div>
+        <div class="mb-2"><span class="fw-bold">Python</span><div class="progress"><div class="progress-bar bg-success" style="width:90%">Expert</div></div></div>
+        <div class="mb-2"><span class="fw-bold">API Testing (RestAssured / Postman)</span><div class="progress"><div class="progress-bar bg-success" style="width:95%">Expert</div></div></div>
+        <div class="mb-2"><span class="fw-bold">Jenkins / Azure DevOps</span><div class="progress"><div class="progress-bar bg-primary" style="width:90%">Expert</div></div></div>
+        <div class="mb-2"><span class="fw-bold">Cucumber / BDD</span><div class="progress"><div class="progress-bar bg-primary" style="width:90%">Expert</div></div></div>
+        <div class="mb-2"><span class="fw-bold">SQL</span><div class="progress"><div class="progress-bar bg-primary" style="width:88%">Expert</div></div></div>
+        <div class="mb-2"><span class="fw-bold">JMeter / Performance Testing</span><div class="progress"><div class="progress-bar bg-warning" style="width:82%">Advanced</div></div></div>
+        <div class="mb-2"><span class="fw-bold">AI Testing / GitHub Copilot</span><div class="progress"><div class="progress-bar bg-info" style="width:78%">Advanced</div></div></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card">
+      <div class="card-header"><h5><i class="fas fa-briefcase"></i> Target Roles</h5></div>
+      <div class="card-body">
+        <ul class="list-group">
+          <li class="list-group-item d-flex justify-content-between">QA Engineer <span class="badge bg-primary">Primary</span></li>
+          <li class="list-group-item d-flex justify-content-between">SDET <span class="badge bg-primary">Primary</span></li>
+          <li class="list-group-item d-flex justify-content-between">Senior QA Automation Engineer <span class="badge bg-success">High</span></li>
+          <li class="list-group-item d-flex justify-content-between">Test Lead Engineer <span class="badge bg-success">High</span></li>
+          <li class="list-group-item d-flex justify-content-between">QA Lead <span class="badge bg-info">Medium</span></li>
+          <li class="list-group-item d-flex justify-content-between">Test Automation Engineer <span class="badge bg-info">Medium</span></li>
+        </ul>
+        <hr>
+        <h6 class="mt-3">Experience: <strong>13 Years</strong></h6>
+        <h6>Location: <strong>Irving, TX (Remote Preferred)</strong></h6>
+        <h6>Domains: <strong>Banking, Healthcare, Insurance, Fintech</strong></h6>
+        <h6>Min Salary: <strong>$130,000+</strong></h6>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% block extra_css %}
+<style>.progress { height: 22px; margin-top: 4px; }</style>
+{% endblock %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  fetch('/api/stats')
+    .then(r => r.json())
+    .then(data => {
+      document.getElementById('totalApps').textContent = data.total_applications || 0;
+      document.getElementById('totalInterviews').textContent = data.interviews || 0;
+      document.getElementById('totalOffers').textContent = data.offers || 0;
+      var rr = data.response_rate ? (data.response_rate * 100).toFixed(1) + '%' : '0%';
+      document.getElementById('responseRate').textContent = rr;
+
+      // Status Pie Chart
+      var sCtx = document.getElementById('statusChart').getContext('2d');
+      new Chart(sCtx, {
+        type: 'doughnut',
+        data: {
+          labels: ['Applied', 'Interview', 'Offer', 'Rejected'],
+          datasets: [{ data: [
+            data.total_applications - (data.interviews||0) - (data.offers||0) - (data.rejections||0),
+            data.interviews || 0,
+            data.offers || 0,
+            data.rejections || 0
+          ], backgroundColor: ['#0d6efd','#ffc107','#198754','#dc3545'] }]
+        },
+        options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+      });
+    });
+
+  // Timeline chart placeholder
+  var tCtx = document.getElementById('timelineChart').getContext('2d');
+  var labels = [];
+  var today = new Date();
+  for (var i = 29; i >= 0; i--) {
+    var d = new Date(today); d.setDate(d.getDate() - i);
+    labels.push(d.toLocaleDateString('en-US', {month:'short', day:'numeric'}));
+  }
+  new Chart(tCtx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{ label: 'Applications', data: Array(30).fill(0),
+        borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,0.1)', tension: 0.4, fill: true }]
+    },
+    options: { responsive: true, scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } } }
+  });
+});
+</script>
+{% endblock %}
