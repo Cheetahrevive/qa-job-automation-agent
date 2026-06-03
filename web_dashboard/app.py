@@ -241,6 +241,38 @@ def add_application():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/seed-test-applications', methods=['POST'])
+@login_required
+def seed_test_applications():
+    """Seed 10 realistic QA job applications for testing"""
+    try:
+        from datetime import timedelta
+        today = datetime.now()
+        test_jobs = [
+            {'job_id': 'qa001', 'job_title': 'Senior QA Automation Engineer', 'company': 'Amazon', 'platform': 'LinkedIn', 'application_url': 'https://amazon.jobs/qa-automation', 'match_score': 0.92, 'status': 'applied', 'days_ago': 1, 'notes': 'Strong match - Selenium + Java + AWS'},
+            {'job_id': 'qa002', 'job_title': 'SDET II - Test Automation', 'company': 'Microsoft', 'platform': 'LinkedIn', 'application_url': 'https://careers.microsoft.com/sdet', 'match_score': 0.88, 'status': 'interview', 'days_ago': 5, 'notes': 'Phone screen scheduled for next week'},
+            {'job_id': 'qa003', 'job_title': 'QA Lead - Automation Framework', 'company': 'Salesforce', 'platform': 'Indeed', 'application_url': 'https://salesforce.com/careers/qa-lead', 'match_score': 0.85, 'status': 'applied', 'days_ago': 3, 'notes': 'Playwright + Python role - great fit'},
+            {'job_id': 'qa004', 'job_title': 'Test Automation Engineer - Selenium', 'company': 'JPMorgan Chase', 'platform': 'Dice', 'application_url': 'https://jpmorgan.com/careers/qa', 'match_score': 0.90, 'status': 'applied', 'days_ago': 2, 'notes': 'Banking domain experience required - match'},
+            {'job_id': 'qa005', 'job_title': 'QA Automation Engineer - API Testing', 'company': 'Cisco', 'platform': 'LinkedIn', 'application_url': 'https://cisco.com/jobs/qa-api', 'match_score': 0.87, 'status': 'rejected', 'days_ago': 10, 'notes': 'Required 15+ years exp - over-qualified'},
+            {'job_id': 'qa006', 'job_title': 'Senior SDET - Performance Testing', 'company': 'Adobe', 'platform': 'Indeed', 'application_url': 'https://adobe.com/careers/sdet', 'match_score': 0.83, 'status': 'applied', 'days_ago': 4, 'notes': 'JMeter + Selenium - good match'},
+            {'job_id': 'qa007', 'job_title': 'QA Engineer - Playwright/Python', 'company': 'Meta', 'platform': 'LinkedIn', 'application_url': 'https://metacareers.com/qa', 'match_score': 0.91, 'status': 'interview', 'days_ago': 7, 'notes': 'Technical interview scheduled - AI testing focus'},
+            {'job_id': 'qa008', 'job_title': 'Test Lead - Healthcare Domain', 'company': 'UnitedHealth Group', 'platform': 'Dice', 'application_url': 'https://uhg.com/careers/qa-lead', 'match_score': 0.86, 'status': 'applied', 'days_ago': 6, 'notes': 'Healthcare QA - HIPAA knowledge required'},
+            {'job_id': 'qa009', 'job_title': 'QA Automation Architect', 'company': 'Capital One', 'platform': 'LinkedIn', 'application_url': 'https://capitalone.com/jobs/qa-architect', 'match_score': 0.89, 'status': 'applied', 'days_ago': 8, 'notes': 'Fintech - leadership role, strong match'},
+            {'job_id': 'qa010', 'job_title': 'Senior QA Engineer - BDD/Cucumber', 'company': 'Dell Technologies', 'platform': 'Indeed', 'application_url': 'https://dell.com/careers/qa', 'match_score': 0.84, 'status': 'offer', 'days_ago': 15, 'notes': 'Offer received - $135k + RSUs - evaluating'},
+        ]
+        count = 0
+        for job in test_jobs:
+            app_date = today - timedelta(days=job['days_ago'])
+            tracker.conn.execute('''
+                INSERT OR REPLACE INTO applications (job_id, job_title, company, platform, application_url, match_score, application_date, status, notes)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (job['job_id'], job['job_title'], job['company'], job['platform'], job['application_url'], job['match_score'], app_date.isoformat(), job['status'], job['notes']))
+            count += 1
+        tracker.conn.commit()
+        return jsonify({'success': True, 'message': f'{count} test applications seeded', 'count': count})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 # Error handlers
 @app.errorhandler(404)
