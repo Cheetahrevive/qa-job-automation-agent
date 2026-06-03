@@ -241,7 +241,7 @@ def add_application():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@app.route('/api/seed-test-applications', methods=['POST'])
+@app.route('/api/seed-test-applications', methods=['GET', 'POST'])
 @login_required
 def seed_test_applications():
     """Seed 10 realistic QA job applications for testing"""
