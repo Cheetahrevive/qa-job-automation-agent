@@ -30,4 +30,6 @@ RUN mkdir -p data/resume data/reports data/logs
 EXPOSE 5000
 
 # Run with gunicorn
-CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "--bind", "0.0.0.0:5000", "web_dashboard.app:app"]
+# NOTE: the build context is web_dashboard/ (see README: `cd web_dashboard`),
+# so app.py lands at /app/app.py and the module is `app`, not `web_dashboard.app`.
+CMD ["gunicorn", "--worker-class", "eventlet", "-w", "1", "--bind", "0.0.0.0:5000", "app:app"]

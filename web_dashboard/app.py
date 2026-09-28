@@ -6,8 +6,17 @@ from flask_cors import CORS
 from datetime import datetime
 from functools import wraps
 
-# Add parent directory to path
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+# Base directory: the web_dashboard package directory (contains app.py,
+# agent/, templates/, static/, scripts/, data/). Anchoring everything here
+# keeps imports, the database path, and runtime dirs consistent no matter
+# how the app is launched:
+#   cd web_dashboard && python app.py
+#   python web_dashboard/app.py            (from repo root)
+#   gunicorn web_dashboard.app:app        (from repo root, e.g. Render)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+
+# Add base directory to path so `from agent...` resolves in every run mode
+sys.path.insert(0, BASE_DIR)
 
 from agent.application_tracker import ApplicationTracker
 
@@ -21,8 +30,8 @@ app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 CORS(app)
 
-# Initialize tracker
-db_path = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data', 'applications.db')
+# Initialize tracker (same DB file that scripts/init_db.py creates)
+db_path = os.path.join(BASE_DIR, 'data', 'applications.db')
 os.makedirs(os.path.dirname(db_path), exist_ok=True)
 tracker = ApplicationTracker(db_path)
 
@@ -286,10 +295,9 @@ def server_error(e):
 # Create startup function
 def initialize_app():
     """Initialize application directories and database"""
-    base_dir = os.path.dirname(os.path.dirname(__file__))
     dirs = ['data', 'data/resume', 'data/reports', 'data/logs']
     for d in dirs:
-        os.makedirs(os.path.join(base_dir, d), exist_ok=True)
+        os.makedirs(os.path.join(BASE_DIR, d), exist_ok=True)
 
 # Initialize on import
 initialize_app()
