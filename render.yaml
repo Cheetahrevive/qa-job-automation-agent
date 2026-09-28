@@ -3,9 +3,9 @@ services:
     name: qa-job-agent
     env: python
     buildCommand: |
-      pip install -r requirements.txt
+      pip install -r web_dashboard/requirements.txt
       python -m spacy download en_core_web_lg
-      python scripts/init_db.py
+      python web_dashboard/scripts/init_db.py
     startCommand: gunicorn web_dashboard.app:app --bind 0.0.0.0:$PORT --worker-class eventlet -w 1
     envVars:
       - key: FLASK_APP
